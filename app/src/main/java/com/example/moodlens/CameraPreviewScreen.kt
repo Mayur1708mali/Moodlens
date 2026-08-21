@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,9 +63,15 @@ fun CameraPreviewScreen(
     }
 
     if (hasCameraPermission) {
-        val frameAnalyzer = remember { FrameAnalyzer(context) }
+        val frameAnalyzer = remember { FrameAnalyzer(context.applicationContext) }
         val detectedFaces by frameAnalyzer.detectedFaces.collectAsStateWithLifecycle()
         val emotionResult by frameAnalyzer.emotionResult.collectAsStateWithLifecycle()
+
+        DisposableEffect(Unit) {
+            onDispose {
+                frameAnalyzer.close()
+            }
+        }
 
         Box(modifier = Modifier.fillMaxSize()) {
             AndroidView(

@@ -45,7 +45,7 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
     val latencyMs: StateFlow<Long> = _latencyMs.asStateFlow()
 
     private val detector: FaceDetector
-    private val emotionClassifier: EmotionClassifier
+    private val emotionClassifier: EmotionClassifier?
 
     /** Frame throttle: skip frame if previous analysis is still in-flight. */
     private val isProcessing = AtomicBoolean(false)
@@ -59,7 +59,11 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
             .build()
 
         detector = FaceDetection.getClient(options)
-        emotionClassifier = EmotionClassifier(context)
+        emotionClassifier = EmotionClassifier.create(context)
+
+        if (emotionClassifier == null) {
+            Log.w(TAG, "EmotionClassifier failed to initialize — emotion detection disabled")
+        }
     }
 
     @OptIn(ExperimentalGetImage::class)
@@ -100,7 +104,7 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                 _detectedFaces.value = detectedList
 
                 // Classify emotion for the first (largest/closest) detected face
-                if (faces.isNotEmpty()) {
+                if (faces.isNotEmpty() && emotionClassifier != null) {
                     try {
                         val classifyStartMs = System.currentTimeMillis()
 
@@ -128,7 +132,9 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                     }
                 } else {
                     _emotionResult.value = null
-                    Log.d(TAG, "No face detected (detection=${detectionMs}ms)")
+                    if (faces.isEmpty()) {
+                        Log.d(TAG, "No face detected (detection=${detectionMs}ms)")
+                    }
                 }
             }
             .addOnFailureListener { e ->
@@ -144,7 +150,7 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
 
     fun close() {
         detector.close()
-        emotionClassifier.close()
+        emotionClassifier?.close()
     }
 
     companion object {
