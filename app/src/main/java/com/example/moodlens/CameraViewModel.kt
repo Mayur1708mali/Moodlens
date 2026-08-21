@@ -29,6 +29,14 @@ sealed interface SaveState {
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = SessionRepository.getInstance(application)
+    private val streakRepository = com.example.moodlens.data.StreakRepository.getInstance(application)
+
+    val streakData: StateFlow<com.example.moodlens.data.StreakData> = streakRepository.streakData
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = com.example.moodlens.data.StreakData()
+        )
 
     private val _isCameraBound = MutableStateFlow(false)
     val isCameraBound: StateFlow<Boolean> = _isCameraBound.asStateFlow()
@@ -54,6 +62,8 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                     faceBitmap = faceBitmap,
                     notes = notes
                 )
+                // Record streak check-in
+                StreakService.recordCheckIn(getApplication())
                 _saveState.value = SaveState.Success(id)
                 Log.i(TAG, "Mood entry saved successfully with ID: $id")
             } catch (e: Exception) {
