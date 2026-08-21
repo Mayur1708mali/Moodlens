@@ -43,6 +43,7 @@ fun JournalScreen(
 ) {
     val entries by journalViewModel.entries.collectAsStateWithLifecycle()
     val totalCount by journalViewModel.totalCount.collectAsStateWithLifecycle()
+    val streakData by journalViewModel.streakData.collectAsStateWithLifecycle()
     val selectedEntry by journalViewModel.selectedEntry.collectAsStateWithLifecycle()
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -73,17 +74,23 @@ fun JournalScreen(
                         )
                     }
 
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = "$totalCount ${if (totalCount == 1) "entry" else "entries"}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        StreakBadge(streakData = streakData)
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text(
+                                text = "$totalCount ${if (totalCount == 1) "entry" else "entries"}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
                     }
                 }
             }
