@@ -1,5 +1,6 @@
 package com.example.moodlens
 
+import android.content.Context
 import android.graphics.Rect
 import android.util.Log
 import androidx.annotation.OptIn
@@ -7,7 +8,6 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -26,15 +26,21 @@ data class DetectedFace(
 )
 
 /**
- * ImageAnalysis.Analyzer that runs ML Kit face detection on each camera frame.
- * Emits detected faces via [detectedFaces] StateFlow.
+ * ImageAnalysis.Analyzer that runs ML Kit face detection on each camera frame,
+ * then crops, preprocesses, and classifies emotions using the TFLite model.
+ *
+ * Emits detected faces and emotion results via StateFlows.
  */
-class FrameAnalyzer : ImageAnalysis.Analyzer {
+class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
 
     private val _detectedFaces = MutableStateFlow<List<DetectedFace>>(emptyList())
     val detectedFaces: StateFlow<List<DetectedFace>> = _detectedFaces.asStateFlow()
 
+    private val _emotionResult = MutableStateFlow<EmotionResult?>(null)
+    val emotionResult: StateFlow<EmotionResult?> = _emotionResult.asStateFlow()
+
     private val detector: FaceDetector
+    private val emotionClassifier: EmotionClassifier
 
     init {
         val options = FaceDetectorOptions.Builder()
@@ -45,6 +51,7 @@ class FrameAnalyzer : ImageAnalysis.Analyzer {
             .build()
 
         detector = FaceDetection.getClient(options)
+        emotionClassifier = EmotionClassifier(context)
     }
 
     @OptIn(ExperimentalGetImage::class)
@@ -62,7 +69,7 @@ class FrameAnalyzer : ImageAnalysis.Analyzer {
 
         detector.process(inputImage)
             .addOnSuccessListener { faces ->
-                _detectedFaces.value = faces.map { face ->
+                val detectedList = faces.map { face ->
                     DetectedFace(
                         boundingBox = face.boundingBox,
                         imageWidth = imageProxy.width,
@@ -70,10 +77,29 @@ class FrameAnalyzer : ImageAnalysis.Analyzer {
                         rotationDegrees = imageProxy.imageInfo.rotationDegrees
                     )
                 }
+                _detectedFaces.value = detectedList
+
+                // Classify emotion for the first (largest/closest) detected face
+                if (faces.isNotEmpty()) {
+                    try {
+                        val bitmap = Preprocessing.imageProxyToBitmap(imageProxy)
+                        val faceBoundingBox = faces[0].boundingBox
+                        val croppedFace = Preprocessing.cropFace(bitmap, faceBoundingBox)
+                        val inputBuffer = Preprocessing.preprocessToByteBuffer(croppedFace)
+                        val result = emotionClassifier.classify(inputBuffer)
+                        _emotionResult.value = result
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Emotion classification failed", e)
+                        _emotionResult.value = null
+                    }
+                } else {
+                    _emotionResult.value = null
+                }
             }
             .addOnFailureListener { e ->
                 Log.e(TAG, "Face detection failed", e)
                 _detectedFaces.value = emptyList()
+                _emotionResult.value = null
             }
             .addOnCompleteListener {
                 imageProxy.close()
@@ -82,6 +108,7 @@ class FrameAnalyzer : ImageAnalysis.Analyzer {
 
     fun close() {
         detector.close()
+        emotionClassifier.close()
     }
 
     companion object {
