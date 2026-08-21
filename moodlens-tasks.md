@@ -62,9 +62,9 @@ Goal: prove camera → face detection → emotion classification → live label 
 
 ## Phase 3: Mood Journal
 
-- [ ] **3.1** `JournalScreen` — Compose `LazyVerticalGrid` of saved entries (thumbnail + emotion + time)
-- [ ] **3.2** Entry detail view (tap to expand)
-- [ ] **3.3** Delete entry support
+- [x] **3.1** `JournalScreen` — Compose `LazyVerticalGrid` of saved entries (thumbnail + emotion + time)
+- [x] **3.2** Entry detail view (tap to expand)
+- [x] **3.3** Delete entry support
 
 ## Phase 4: Daily Summary
 
