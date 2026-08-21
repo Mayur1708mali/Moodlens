@@ -34,8 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
+import androidx.compose.material.icons.filled.Home
+import com.example.moodlens.theme.MoodlensTheme
+
 enum class AppTab(val title: String) {
-    CAMERA("Camera"),
+    HOME("Home"),
+    CAMERA("Detect"),
     JOURNAL("Journal"),
     SUMMARY("Summary")
 }
@@ -48,8 +52,11 @@ class MainActivity : ComponentActivity() {
         // Schedule daily check-in reminder background job (8:00 PM)
         CheckInReminderWorker.scheduleDailyReminder(this)
 
+        // Schedule weekly storage cleanup for thumbnail retention policy
+        StorageCleanupWorker.scheduleWeeklyCleanup(this)
+
         setContent {
-            MaterialTheme {
+            MoodlensTheme {
                 MainAppScreen()
             }
         }
@@ -59,7 +66,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainAppScreen() {
     val context = LocalContext.current
-    var selectedTab by remember { mutableStateOf(AppTab.CAMERA) }
+    var selectedTab by remember { mutableStateOf(AppTab.HOME) }
 
     // Request POST_NOTIFICATIONS permission on Android 13+ (API 33+)
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -88,9 +95,15 @@ fun MainAppScreen() {
             bottomBar = {
                 NavigationBar {
                     NavigationBarItem(
+                        selected = selectedTab == AppTab.HOME,
+                        onClick = { selectedTab = AppTab.HOME },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                        label = { Text("Home") }
+                    )
+                    NavigationBarItem(
                         selected = selectedTab == AppTab.CAMERA,
                         onClick = { selectedTab = AppTab.CAMERA },
-                        icon = { Icon(Icons.Default.Face, contentDescription = "Camera") },
+                        icon = { Icon(Icons.Default.Face, contentDescription = "Detect") },
                         label = { Text("Detect") }
                     )
                     NavigationBarItem(
@@ -114,6 +127,11 @@ fun MainAppScreen() {
                     .padding(innerPadding)
             ) {
                 when (selectedTab) {
+                    AppTab.HOME -> HomeScreen(
+                        onNavigateToCamera = { selectedTab = AppTab.CAMERA },
+                        onNavigateToJournal = { selectedTab = AppTab.JOURNAL },
+                        onNavigateToSummary = { selectedTab = AppTab.SUMMARY }
+                    )
                     AppTab.CAMERA -> CameraPreviewScreen()
                     AppTab.JOURNAL -> JournalScreen()
                     AppTab.SUMMARY -> DailySummaryScreen()
