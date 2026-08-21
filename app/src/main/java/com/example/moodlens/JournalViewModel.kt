@@ -19,6 +19,14 @@ import kotlinx.coroutines.launch
 class JournalViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = SessionRepository.getInstance(application)
+    private val streakRepository = com.example.moodlens.data.StreakRepository.getInstance(application)
+
+    val streakData: StateFlow<com.example.moodlens.data.StreakData> = streakRepository.streakData
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = com.example.moodlens.data.StreakData()
+        )
 
     val entries: StateFlow<List<SessionEntry>> = repository.allSessions
         .stateIn(
