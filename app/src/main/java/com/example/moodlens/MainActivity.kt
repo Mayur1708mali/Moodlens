@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.Icon
@@ -27,7 +27,8 @@ import androidx.compose.ui.Modifier
 
 enum class AppTab(val title: String) {
     CAMERA("Camera"),
-    JOURNAL("Journal")
+    JOURNAL("Journal"),
+    SUMMARY("Summary")
 }
 
 class MainActivity : ComponentActivity() {
@@ -66,6 +67,12 @@ fun MainAppScreen() {
                         icon = { Icon(Icons.Default.DateRange, contentDescription = "Journal") },
                         label = { Text("Journal") }
                     )
+                    NavigationBarItem(
+                        selected = selectedTab == AppTab.SUMMARY,
+                        onClick = { selectedTab = AppTab.SUMMARY },
+                        icon = { Icon(Icons.Default.Assessment, contentDescription = "Daily Summary") },
+                        label = { Text("Summary") }
+                    )
                 }
             }
         ) { innerPadding ->
@@ -77,6 +84,7 @@ fun MainAppScreen() {
                 when (selectedTab) {
                     AppTab.CAMERA -> CameraPreviewScreen()
                     AppTab.JOURNAL -> JournalScreen()
+                    AppTab.SUMMARY -> DailySummaryScreen()
                 }
             }
         }
