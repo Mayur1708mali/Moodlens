@@ -85,6 +85,33 @@ class ThumbnailStore(private val context: Context) {
     }
 
     /**
+     * Returns all thumbnail files currently in storage.
+     */
+    fun getAllThumbnailFiles(): List<File> {
+        return thumbnailDir.listFiles()?.toList() ?: emptyList()
+    }
+
+    /**
+     * Deletes thumbnail files older than [retentionDays] days.
+     * @return Count of deleted files.
+     */
+    suspend fun cleanOldThumbnails(retentionDays: Int = 30): Int = withContext(Dispatchers.IO) {
+        val cutoffTime = System.currentTimeMillis() - (retentionDays * 24L * 60 * 60 * 1000L)
+        var deletedCount = 0
+        thumbnailDir.listFiles()?.forEach { file ->
+            if (file.lastModified() < cutoffTime) {
+                if (file.delete()) {
+                    deletedCount++
+                }
+            }
+        }
+        if (deletedCount > 0) {
+            Log.i(TAG, "Cleaned up $deletedCount old thumbnails older than $retentionDays days")
+        }
+        deletedCount
+    }
+
+    /**
      * Clears all saved thumbnail files.
      */
     suspend fun clearAll(): Boolean = withContext(Dispatchers.IO) {
