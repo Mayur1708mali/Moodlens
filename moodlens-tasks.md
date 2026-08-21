@@ -68,9 +68,9 @@ Goal: prove camera → face detection → emotion classification → live label 
 
 ## Phase 4: Daily Summary
 
-- [ ] **4.1** `MoodSummaryService` — aggregate today's entries, compute dominant emotion
-- [ ] **4.2** Dip detection logic (cluster of negative emotions + time window)
-- [ ] **4.3** `DailySummaryScreen` UI card
+- [x] **4.1** `MoodSummaryService` — aggregate today's entries, compute dominant emotion
+- [x] **4.2** Dip detection logic (cluster of negative emotions + time window)
+- [x] **4.3** `DailySummaryScreen` UI card
 
 ## Phase 5: Streaks & Check-In Nudges
 
