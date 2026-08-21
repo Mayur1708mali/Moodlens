@@ -293,6 +293,9 @@ fun DailySummaryScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                        val timelineEntries = remember(summary.entries) {
+                            summary.entries.sortedByDescending { it.timestamp }
+                        }
 
                         Box(
                             modifier = Modifier
@@ -310,7 +313,7 @@ fun DailySummaryScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
-                                summary.entries.forEach { entry ->
+                                timelineEntries.forEach { entry ->
                                     val color = getEmotionColor(entry.emotionLabel)
 
                                     Row(
