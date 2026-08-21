@@ -73,9 +73,9 @@ class EmotionClassifier private constructor(
 
     private fun softmax(logits: FloatArray): FloatArray {
         val maxLogit = logits.maxOrNull() ?: 0f
-        val exps = logits.map { exp(it - maxLogit) }
-        val sumExps = exps.sum()
-        return exps.map { it / sumExps }.toFloatArray()
+        val expValues = logits.map { exp(it - maxLogit) }
+        val sumExpValues = expValues.sum()
+        return expValues.map { it / sumExpValues }.toFloatArray()
     }
 
     fun close() {
@@ -108,7 +108,7 @@ class EmotionClassifier private constructor(
             }
         }
 
-        private fun loadModelFile(context: Context, filename: String): MappedByteBuffer {
+        private fun loadModelFile(context: Context, filename: String = MODEL_FILENAME): MappedByteBuffer {
             val assetFileDescriptor = context.assets.openFd(filename)
             val inputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
             val fileChannel = inputStream.channel

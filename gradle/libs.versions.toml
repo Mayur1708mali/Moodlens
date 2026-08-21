@@ -14,6 +14,7 @@ coroutines = "1.11.0"
 camerax = "1.6.1"
 mlkitFaceDetection = "16.1.7"
 litert = "2.1.4"
+tensorflowLite = "2.16.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,7 +50,8 @@ camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = 
 # ML Kit Face Detection (bundled)
 mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", version.ref = "mlkitFaceDetection" }
 
-# LiteRT (TFLite successor)
+# TensorFlow Lite
+tensorflow-lite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "tensorflowLite" }
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
 
 [plugins]

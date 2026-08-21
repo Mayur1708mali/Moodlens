@@ -75,8 +75,8 @@ dependencies {
     // ML Kit Face Detection (bundled)
     implementation(libs.mlkit.face.detection)
 
-    // LiteRT (TFLite successor)
-    implementation(libs.litert)
+    // TensorFlow Lite
+    implementation(libs.tensorflow.lite)
 
     // Test
     testImplementation(libs.junit)
