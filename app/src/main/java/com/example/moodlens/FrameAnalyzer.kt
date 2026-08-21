@@ -14,6 +14,7 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Data class representing a detected face's bounding box and image dimensions.
@@ -29,7 +30,8 @@ data class DetectedFace(
  * ImageAnalysis.Analyzer that runs ML Kit face detection on each camera frame,
  * then crops, preprocesses, and classifies emotions using the TFLite model.
  *
- * Emits detected faces and emotion results via StateFlows.
+ * Includes frame throttling (skips frames while previous is still processing)
+ * and performance timing logged to Logcat.
  */
 class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
 
@@ -39,8 +41,14 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
     private val _emotionResult = MutableStateFlow<EmotionResult?>(null)
     val emotionResult: StateFlow<EmotionResult?> = _emotionResult.asStateFlow()
 
+    private val _latencyMs = MutableStateFlow(0L)
+    val latencyMs: StateFlow<Long> = _latencyMs.asStateFlow()
+
     private val detector: FaceDetector
     private val emotionClassifier: EmotionClassifier
+
+    /** Frame throttle: skip frame if previous analysis is still in-flight. */
+    private val isProcessing = AtomicBoolean(false)
 
     init {
         val options = FaceDetectorOptions.Builder()
@@ -56,9 +64,18 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
+        // Frame throttling: drop frame if still processing the previous one
+        if (!isProcessing.compareAndSet(false, true)) {
+            imageProxy.close()
+            return
+        }
+
+        val frameStartMs = System.currentTimeMillis()
+
         val mediaImage = imageProxy.image
         if (mediaImage == null) {
             imageProxy.close()
+            isProcessing.set(false)
             return
         }
 
@@ -69,6 +86,9 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
 
         detector.process(inputImage)
             .addOnSuccessListener { faces ->
+                val detectionEndMs = System.currentTimeMillis()
+                val detectionMs = detectionEndMs - frameStartMs
+
                 val detectedList = faces.map { face ->
                     DetectedFace(
                         boundingBox = face.boundingBox,
@@ -82,18 +102,33 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                 // Classify emotion for the first (largest/closest) detected face
                 if (faces.isNotEmpty()) {
                     try {
+                        val classifyStartMs = System.currentTimeMillis()
+
                         val bitmap = Preprocessing.imageProxyToBitmap(imageProxy)
                         val faceBoundingBox = faces[0].boundingBox
                         val croppedFace = Preprocessing.cropFace(bitmap, faceBoundingBox)
                         val inputBuffer = Preprocessing.preprocessToByteBuffer(croppedFace)
                         val result = emotionClassifier.classify(inputBuffer)
                         _emotionResult.value = result
+
+                        val classifyEndMs = System.currentTimeMillis()
+                        val totalMs = classifyEndMs - frameStartMs
+                        _latencyMs.value = totalMs
+
+                        Log.d(
+                            TAG,
+                            "Frame pipeline: detection=${detectionMs}ms, " +
+                                    "classify=${classifyEndMs - classifyStartMs}ms, " +
+                                    "total=${totalMs}ms | " +
+                                    "${result.label} (${(result.confidence * 100).toInt()}%)"
+                        )
                     } catch (e: Exception) {
                         Log.e(TAG, "Emotion classification failed", e)
                         _emotionResult.value = null
                     }
                 } else {
                     _emotionResult.value = null
+                    Log.d(TAG, "No face detected (detection=${detectionMs}ms)")
                 }
             }
             .addOnFailureListener { e ->
@@ -103,6 +138,7 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
             }
             .addOnCompleteListener {
                 imageProxy.close()
+                isProcessing.set(false)
             }
     }
 
