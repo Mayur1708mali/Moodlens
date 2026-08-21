@@ -8,41 +8,41 @@ Companion to `moodlens-system-design-android.md`. Tasks are ordered by priority 
 
 Goal: prove camera → face detection → emotion classification → live label on screen works end-to-end, with no journal, no storage, no notifications, minimal UI.
 
-- [ ] **1.1 Project scaffold**
+- [x] **1.1 Project scaffold**
   - Add dependencies: CameraX, ML Kit Face Detection, TFLite, Coroutines
   - Confirm project builds and runs a blank Compose screen on a physical device
 
-- [ ] **1.2 Camera preview**
+- [x] **1.2 Camera preview**
   - Implement `CameraViewModel` + CameraX `Preview` use case
   - Request `CAMERA` runtime permission with rationale UI
   - Confirm live camera preview renders in a Compose `AndroidView`/`PreviewView`
 
-- [ ] **1.3 Face detection (ML Kit)**
+- [x] **1.3 Face detection (ML Kit)**
   - Add `ImageAnalysis` use case with `FrameAnalyzer`
   - Wire ML Kit `FaceDetector` to run on each analyzed frame
   - Draw a bounding box overlay on detected face(s) — no emotion yet, just prove detection works
   - Test: bounding box tracks your face in real time, disappears when no face present
 
-- [ ] **1.4 Source the emotion model**
+- [x] **1.4 Source the emotion model**
   - use ferplus_model_pd_best.tflite file
   - Inspect input tensor shape (expected: grayscale, 48x48) and output shape (7 classes)
   - Confirm label order matches: angry, disgust, fear, happy, sad, surprise, neutral
   - Place file at `app/src/main/assets/emotion_model.tflite`
 
-- [ ] **1.5 Preprocessing**
+- [x] **1.5 Preprocessing**
   - Implement `Preprocessing.kt`: crop `Bitmap` to face bounding box, convert to grayscale (if model expects it), resize to model's input dims, normalize pixel values (0–1 or -1–1, match model's training preprocessing)
   - Unit test preprocessing output shape/values against a known input, if feasible
 
-- [ ] **1.6 TFLite inference**
+- [x] **1.6 TFLite inference**
   - Implement `EmotionClassifier.kt`: load model from assets, run `Interpreter.run()` on preprocessed tensor
   - Return top label + confidence score
   - Log raw output scores for all 7 classes to Logcat for sanity-checking (not just top-1)
 
-- [ ] **1.7 Wire it together**
+- [x] **1.7 Wire it together**
   - `FrameAnalyzer` → face crop → preprocess → classify → emit result via `StateFlow`
   - Display live label + confidence as text overlay on camera preview (no fancy UI yet)
 
-- [ ] **1.8 Validate accuracy & performance**
+- [x] **1.8 Validate accuracy & performance**
   - Test on physical device with varied expressions (smile, frown, surprised face, neutral)
   - Confirm reasonable classification (won't be perfect — FER2013 models cap ~65-75% accuracy; disgust/fear will be weakest)
   - Measure end-to-end latency per frame (target <150ms) — log timestamps around detection+inference
@@ -55,10 +55,10 @@ Goal: prove camera → face detection → emotion classification → live label 
 
 ## Phase 2: Local Persistence (only after Phase 1 passes)
 
-- [ ] **2.1** Set up Room database, `SessionEntry` entity + DAO
-- [ ] **2.2** Implement `ThumbnailStore` (save cropped face as downscaled JPEG to internal storage)
-- [ ] **2.3** Add "save" action to camera screen — writes entry + thumbnail on tap
-- [ ] **2.4** `SessionRepository` wrapping Room + file storage
+- [x] **2.1** Set up Room database, `SessionEntry` entity + DAO
+- [x] **2.2** Implement `ThumbnailStore` (save cropped face as downscaled JPEG to internal storage)
+- [x] **2.3** Add "save" action to camera screen — writes entry + thumbnail on tap
+- [x] **2.4** `SessionRepository` wrapping Room + file storage
 
 ## Phase 3: Mood Journal
 
