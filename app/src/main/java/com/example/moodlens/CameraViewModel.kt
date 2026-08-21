@@ -1,6 +1,7 @@
 package com.example.moodlens
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -10,19 +11,61 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.viewModelScope
+import com.example.moodlens.data.SessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
+sealed interface SaveState {
+    data object Idle : SaveState
+    data object Saving : SaveState
+    data class Success(val sessionId: Long) : SaveState
+    data class Error(val message: String) : SaveState
+}
+
 class CameraViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = SessionRepository.getInstance(application)
 
     private val _isCameraBound = MutableStateFlow(false)
     val isCameraBound: StateFlow<Boolean> = _isCameraBound.asStateFlow()
 
+    private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
+    val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
+
     private val analysisExecutor = Executors.newSingleThreadExecutor()
 
     private var imageAnalysis: ImageAnalysis? = null
+
+    fun saveCurrentMood(
+        emotionResult: EmotionResult,
+        faceBitmap: Bitmap?,
+        notes: String? = null
+    ) {
+        viewModelScope.launch {
+            _saveState.value = SaveState.Saving
+            try {
+                val id = repository.saveSession(
+                    emotionLabel = emotionResult.label,
+                    confidence = emotionResult.confidence,
+                    faceBitmap = faceBitmap,
+                    notes = notes
+                )
+                _saveState.value = SaveState.Success(id)
+                Log.i(TAG, "Mood entry saved successfully with ID: $id")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save mood entry", e)
+                _saveState.value = SaveState.Error(e.message ?: "Failed to save mood")
+            }
+        }
+    }
+
+    fun resetSaveState() {
+        _saveState.value = SaveState.Idle
+    }
 
     fun bindCamera(
         lifecycleOwner: LifecycleOwner,
