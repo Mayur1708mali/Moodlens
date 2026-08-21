@@ -45,6 +45,37 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.Dp
+
+/**
+ * Custom modifier that draws an elegant vertical scrollbar over a scrollable container.
+ */
+fun Modifier.verticalScrollbar(
+    scrollState: ScrollState,
+    color: Color = Color.Gray,
+    width: Dp = 4.dp
+): Modifier = drawWithContent {
+    drawContent()
+    val totalHeight = size.height
+    val contentHeight = scrollState.maxValue + totalHeight
+    if (contentHeight > totalHeight && scrollState.maxValue > 0) {
+        val thumbHeight = (totalHeight * (totalHeight / contentHeight)).coerceAtLeast(28.dp.toPx())
+        val thumbOffset = (totalHeight - thumbHeight) * (scrollState.value.toFloat() / scrollState.maxValue)
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width - width.toPx(), thumbOffset),
+            size = Size(width.toPx(), thumbHeight),
+            cornerRadius = CornerRadius(width.toPx() / 2, width.toPx() / 2)
+        )
+    }
+}
+
 @Composable
 fun DailySummaryScreen(
     summaryViewModel: SummaryViewModel = viewModel(),
@@ -59,6 +90,7 @@ fun DailySummaryScreen(
     }
 
     val scrollState = rememberScrollState()
+    val timelineScrollState = rememberScrollState()
 
     Column(
         modifier = modifier
@@ -218,7 +250,7 @@ fun DailySummaryScreen(
                 // 3. Emotion Distribution Card
                 EmotionDistributionCard(summary = summary)
 
-                // 4. Today's Timeline
+                // 4. Today's Timeline with Scrollbar & default ~10 items view
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -231,46 +263,85 @@ fun DailySummaryScreen(
                             .fillMaxWidth()
                             .padding(20.dp)
                     ) {
-                        Text(
-                            text = "Timeline (${summary.entries.size} check-ins)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Timeline (${summary.entries.size} check-ins)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            if (summary.entries.size > 10) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                ) {
+                                    Text(
+                                        text = "Scroll for all",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
                         val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
-                        summary.entries.forEachIndexed { index, entry ->
-                            val color = getEmotionColor(entry.emotionLabel)
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(10.dp)
-                                            .clip(RoundedCornerShape(5.dp))
-                                            .background(color)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Text(
-                                        text = entry.emotionLabel.replaceFirstChar { it.uppercase() },
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-
-                                Text(
-                                    text = "${timeFormat.format(Date(entry.timestamp))} • ${(entry.confidence * 100).toInt()}%",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 380.dp)
+                                .verticalScrollbar(
+                                    scrollState = timelineScrollState,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                    width = 4.dp
                                 )
+                                .verticalScroll(timelineScrollState)
+                                .padding(end = 8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                summary.entries.forEach { entry ->
+                                    val color = getEmotionColor(entry.emotionLabel)
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 6.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(10.dp)
+                                                    .clip(RoundedCornerShape(5.dp))
+                                                    .background(color)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Text(
+                                                text = entry.emotionLabel.replaceFirstChar { it.uppercase() },
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+
+                                        Text(
+                                            text = "${timeFormat.format(Date(entry.timestamp))} • ${(entry.confidence * 100).toInt()}%",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
