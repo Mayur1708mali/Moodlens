@@ -7,6 +7,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +59,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                 Log.e(TAG, "Camera binding failed", e)
                 _isCameraBound.value = false
             }
-        }, analysisExecutor)
+        }, ContextCompat.getMainExecutor(getApplication()))
     }
 
     override fun onCleared() {
