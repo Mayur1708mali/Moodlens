@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,12 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun CameraPreviewScreen(
-    cameraViewModel: CameraViewModel = viewModel(),
-    overlay: @Composable () -> Unit = {}
+    cameraViewModel: CameraViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -57,6 +56,9 @@ fun CameraPreviewScreen(
     }
 
     if (hasCameraPermission) {
+        val frameAnalyzer = remember { FrameAnalyzer() }
+        val detectedFaces by frameAnalyzer.detectedFaces.collectAsStateWithLifecycle()
+
         Box(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { ctx ->
@@ -65,13 +67,16 @@ fun CameraPreviewScreen(
                         cameraViewModel.bindCamera(
                             lifecycleOwner = lifecycleOwner,
                             previewView = previewView,
-                            analyzer = NoOpAnalyzer()
+                            analyzer = frameAnalyzer
                         )
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
-            overlay()
+            FaceOverlay(
+                faces = detectedFaces,
+                isFrontCamera = true
+            )
         }
     } else {
         Box(
@@ -89,14 +94,5 @@ fun CameraPreviewScreen(
                 }
             }
         }
-    }
-}
-
-/**
- * Placeholder analyzer that does nothing — will be replaced by FrameAnalyzer.
- */
-private class NoOpAnalyzer : androidx.camera.core.ImageAnalysis.Analyzer {
-    override fun analyze(image: androidx.camera.core.ImageProxy) {
-        image.close()
     }
 }
