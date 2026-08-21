@@ -68,6 +68,7 @@ fun CameraPreviewScreen(
         val emotionResult by frameAnalyzer.emotionResult.collectAsStateWithLifecycle()
         val latestCroppedFace by frameAnalyzer.latestCroppedFace.collectAsStateWithLifecycle()
         val saveState by cameraViewModel.saveState.collectAsStateWithLifecycle()
+        val streakData by cameraViewModel.streakData.collectAsStateWithLifecycle()
 
         DisposableEffect(Unit) {
             onDispose {
@@ -101,6 +102,14 @@ fun CameraPreviewScreen(
             FaceOverlay(
                 faces = detectedFaces,
                 isFrontCamera = true
+            )
+
+            // Streak Badge overlay
+            StreakBadge(
+                streakData = streakData,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
             )
 
             // Emotion label overlay & save action
