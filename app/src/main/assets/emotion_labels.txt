@@ -1,7 +1,8 @@
+neutral
+happy
+surprise
+sad
 angry
 disgust
 fear
-happy
-sad
-surprise
-neutral
+contempt

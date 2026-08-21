@@ -2,11 +2,9 @@ package com.example.moodlens
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.ImageFormat
+import android.graphics.Matrix
 import android.graphics.Rect
-import android.graphics.YuvImage
 import androidx.camera.core.ImageProxy
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -20,27 +18,18 @@ object Preprocessing {
     const val MODEL_INPUT_SIZE = 48
 
     /**
-     * Converts an ImageProxy (YUV_420_888) to a full-frame Bitmap.
+     * Converts an ImageProxy to a full-frame Bitmap using CameraX's built-in toBitmap(),
+     * and rotates it according to the image rotation degrees to match ML Kit coordinate space.
      */
     fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap {
-        val yBuffer = imageProxy.planes[0].buffer
-        val uBuffer = imageProxy.planes[1].buffer
-        val vBuffer = imageProxy.planes[2].buffer
-
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
-
-        val nv21 = ByteArray(ySize + uSize + vSize)
-        yBuffer.get(nv21, 0, ySize)
-        vBuffer.get(nv21, ySize, vSize)
-        uBuffer.get(nv21, ySize + vSize, uSize)
-
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, imageProxy.width, imageProxy.height, null)
-        val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, imageProxy.width, imageProxy.height), 100, out)
-        val jpegBytes = out.toByteArray()
-        return android.graphics.BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+        val bitmap = imageProxy.toBitmap()
+        val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+        return if (rotationDegrees != 0) {
+            val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        } else {
+            bitmap
+        }
     }
 
     /**

@@ -116,29 +116,52 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                         _emotionResult.value = result
 
                         val classifyEndMs = System.currentTimeMillis()
+                        val classifyMs = classifyEndMs - classifyStartMs
                         val totalMs = classifyEndMs - frameStartMs
                         _latencyMs.value = totalMs
 
-                        Log.d(
+                        Log.i(
                             TAG,
                             "Frame pipeline: detection=${detectionMs}ms, " +
-                                    "classify=${classifyEndMs - classifyStartMs}ms, " +
+                                    "classify=${classifyMs}ms, " +
                                     "total=${totalMs}ms | " +
                                     "${result.label} (${(result.confidence * 100).toInt()}%)"
                         )
                     } catch (e: Exception) {
-                        Log.e(TAG, "Emotion classification failed", e)
+                        val totalMs = System.currentTimeMillis() - frameStartMs
+                        Log.e(
+                            TAG,
+                            "Emotion classification failed: detection=${detectionMs}ms, total=${totalMs}ms",
+                            e
+                        )
                         _emotionResult.value = null
                     }
                 } else {
                     _emotionResult.value = null
+                    val totalMs = System.currentTimeMillis() - frameStartMs
+                    _latencyMs.value = totalMs
                     if (faces.isEmpty()) {
-                        Log.d(TAG, "No face detected (detection=${detectionMs}ms)")
+                        Log.i(
+                            TAG,
+                            "Frame pipeline: detection=${detectionMs}ms, " +
+                                    "classify=0ms, " +
+                                    "total=${totalMs}ms | " +
+                                    "No face detected"
+                        )
+                    } else {
+                        Log.w(
+                            TAG,
+                            "Frame pipeline: detection=${detectionMs}ms, " +
+                                    "classify=N/A, " +
+                                    "total=${totalMs}ms | " +
+                                    "Face detected (${faces.size}) but EmotionClassifier is null"
+                        )
                     }
                 }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Face detection failed", e)
+                val totalMs = System.currentTimeMillis() - frameStartMs
+                Log.e(TAG, "Face detection failed: total=${totalMs}ms", e)
                 _detectedFaces.value = emptyList()
                 _emotionResult.value = null
             }

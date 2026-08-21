@@ -54,7 +54,7 @@ class CameraViewModel(application: Application) : AndroidViewModel(application) 
                     imageAnalysis
                 )
                 _isCameraBound.value = true
-                Log.d(TAG, "Camera bound successfully")
+                Log.i(TAG, "Camera bound successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Camera binding failed", e)
                 _isCameraBound.value = false

@@ -9,7 +9,6 @@ Companion to `moodlens-system-design-android.md`. Tasks are ordered by priority 
 Goal: prove camera → face detection → emotion classification → live label on screen works end-to-end, with no journal, no storage, no notifications, minimal UI.
 
 - [ ] **1.1 Project scaffold**
-  - Create Android Studio project (Kotlin, Compose, min SDK 26+)
   - Add dependencies: CameraX, ML Kit Face Detection, TFLite, Coroutines
   - Confirm project builds and runs a blank Compose screen on a physical device
 
@@ -25,7 +24,7 @@ Goal: prove camera → face detection → emotion classification → live label 
   - Test: bounding box tracks your face in real time, disappears when no face present
 
 - [ ] **1.4 Source the emotion model**
-  - Download `vicksam/fer-model` (or equivalent) `.tflite` file
+  - use ferplus_model_pd_best.tflite file
   - Inspect input tensor shape (expected: grayscale, 48x48) and output shape (7 classes)
   - Confirm label order matches: angry, disgust, fear, happy, sad, surprise, neutral
   - Place file at `app/src/main/assets/emotion_model.tflite`

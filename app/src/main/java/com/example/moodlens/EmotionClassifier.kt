@@ -7,6 +7,7 @@ import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.math.exp
 
 /**
  * Result of emotion classification.
@@ -43,30 +44,38 @@ class EmotionClassifier private constructor(
 
     /**
      * Runs inference on preprocessed input buffer.
-     * Returns [EmotionResult] with top label, confidence, and all 7 scores.
+     * Returns [EmotionResult] with top label, confidence, and all 8 scores.
      */
     fun classify(inputBuffer: ByteBuffer): EmotionResult {
-        // Output: [1, 7]
+        // Output: [1, 8]
         val outputArray = Array(1) { FloatArray(labels.size) }
 
         interpreter.run(inputBuffer, outputArray)
 
-        val scores = outputArray[0]
+        val rawScores = outputArray[0]
+        val probabilities = softmax(rawScores)
 
-        // Log all scores for debugging
-        val scoreLog = labels.zip(scores.toList()).joinToString { "${it.first}: %.3f".format(it.second) }
-        Log.d(TAG, "Scores: $scoreLog")
+        // Log all probabilities for debugging
+        val scoreLog = labels.zip(probabilities.toList()).joinToString { "${it.first}: %.3f".format(it.second) }
+        Log.i(TAG, "Probabilities: $scoreLog")
 
         // Find top prediction
-        val maxIndex = scores.indices.maxByOrNull { scores[it] } ?: 0
+        val maxIndex = probabilities.indices.maxByOrNull { probabilities[it] } ?: 0
         val topLabel = labels[maxIndex]
-        val topConfidence = scores[maxIndex]
+        val topConfidence = probabilities[maxIndex]
 
         return EmotionResult(
             label = topLabel,
             confidence = topConfidence,
-            allScores = scores
+            allScores = probabilities
         )
+    }
+
+    private fun softmax(logits: FloatArray): FloatArray {
+        val maxLogit = logits.maxOrNull() ?: 0f
+        val exps = logits.map { exp(it - maxLogit) }
+        val sumExps = exps.sum()
+        return exps.map { it / sumExps }.toFloatArray()
     }
 
     fun close() {
@@ -91,7 +100,7 @@ class EmotionClassifier private constructor(
                 val labels = appContext.assets.open(LABELS_FILENAME).bufferedReader().readLines()
                     .filter { it.isNotBlank() }
 
-                Log.d(TAG, "Model loaded successfully. Labels: $labels")
+                Log.i(TAG, "Model loaded successfully. Labels: $labels")
                 EmotionClassifier(interpreter, labels)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize EmotionClassifier", e)
