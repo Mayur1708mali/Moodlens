@@ -1,6 +1,7 @@
 package com.example.moodlens
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Rect
 import android.util.Log
 import androidx.annotation.OptIn

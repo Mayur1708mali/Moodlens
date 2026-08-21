@@ -18,16 +18,16 @@ interface SessionDao {
     suspend fun insert(entry: SessionEntry): Long
 
     @Update
-    suspend fun update(entry: SessionEntry)
+    suspend fun update(entry: SessionEntry): Int
 
     @Delete
-    suspend fun delete(entry: SessionEntry)
+    suspend fun delete(entry: SessionEntry): Int
 
     @Query("DELETE FROM session_entries WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun deleteById(id: Long): Int
 
     @Query("DELETE FROM session_entries")
-    suspend fun deleteAll()
+    suspend fun deleteAll(): Int
 
     @Query("SELECT * FROM session_entries WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): SessionEntry?
