@@ -74,16 +74,16 @@ Goal: prove camera → face detection → emotion classification → live label 
 
 ## Phase 5: Streaks & Check-In Nudges
 
-- [ ] **5.1** DataStore-backed `StreakData` + `StreakRepository`
-- [ ] **5.2** `StreakService` increment/reset logic on check-in
-- [ ] **5.3** `StreakBadge` UI component
-- [ ] **5.4** `POST_NOTIFICATIONS` permission request (Android 13+)
-- [ ] **5.5** `WorkManager` daily job (`CheckInReminderWorker`) — fires only if no check-in yet that day
+- [x] **5.1** DataStore-backed `StreakData` + `StreakRepository`
+- [x] **5.2** `StreakService` increment/reset logic on check-in
+- [x] **5.3** `StreakBadge` UI component
+- [x] **5.4** `POST_NOTIFICATIONS` permission request (Android 13+)
+- [x] **5.5** `WorkManager` daily job (`CheckInReminderWorker`) — fires only if no check-in yet that day
 
 ## Phase 6: Polish
 
 - [ ] **6.1** Home screen tying journal/summary/streak together
-- [ ] **6.2** App icon, theming, empty states
+- [ ] **6.2** App icon, theming, empty states, dark mode, loading state
 - [ ] **6.3** Storage cleanup for old thumbnails (retention policy)
 - [ ] **6.4** Final battery/performance pass
 
