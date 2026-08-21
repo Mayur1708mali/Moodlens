@@ -93,7 +93,7 @@ class EmotionClassifier private constructor(
         fun create(context: Context): EmotionClassifier? {
             return try {
                 val appContext = context.applicationContext
-                val modelBuffer = loadModelFile(appContext, MODEL_FILENAME)
+                val modelBuffer = loadModelFile(appContext)
                 val options = Interpreter.Options().setNumThreads(2)
                 val interpreter = Interpreter(modelBuffer, options)
 
@@ -108,8 +108,8 @@ class EmotionClassifier private constructor(
             }
         }
 
-        private fun loadModelFile(context: Context, filename: String = MODEL_FILENAME): MappedByteBuffer {
-            val assetFileDescriptor = context.assets.openFd(filename)
+        private fun loadModelFile(context: Context): MappedByteBuffer {
+            val assetFileDescriptor = context.assets.openFd(MODEL_FILENAME)
             val inputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
             val fileChannel = inputStream.channel
             val startOffset = assetFileDescriptor.startOffset
