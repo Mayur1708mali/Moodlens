@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -77,6 +78,11 @@ dependencies {
 
     // TensorFlow Lite
     implementation(libs.tensorflow.lite)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Test
     testImplementation(libs.junit)
