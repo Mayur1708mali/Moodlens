@@ -82,10 +82,10 @@ Goal: prove camera → face detection → emotion classification → live label 
 
 ## Phase 6: Polish
 
-- [ ] **6.1** Home screen tying journal/summary/streak together
-- [ ] **6.2** App icon, theming, empty states, dark mode, loading state
-- [ ] **6.3** Storage cleanup for old thumbnails (retention policy)
-- [ ] **6.4** Final battery/performance pass
+- [x] **6.1** Home screen tying journal/summary/streak together
+- [x] **6.2** App icon, theming, empty states, dark mode, loading state
+- [x] **6.3** Storage cleanup for old thumbnails (retention policy)
+- [x] **6.4** Final battery/performance pass
 
 ---
 
