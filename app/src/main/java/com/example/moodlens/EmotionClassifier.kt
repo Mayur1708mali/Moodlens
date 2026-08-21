@@ -2,8 +2,7 @@ package com.example.moodlens
 
 import android.content.Context
 import android.util.Log
-import com.google.ai.edge.litert.InterpreterApi
-import com.google.ai.edge.litert.InterpreterApi.Options
+import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
@@ -39,15 +38,13 @@ data class EmotionResult(
  */
 class EmotionClassifier(context: Context) {
 
-    private val interpreter: InterpreterApi
+    private val interpreter: Interpreter
     private val labels: List<String>
 
     init {
         val modelBuffer = loadModelFile(context, MODEL_FILENAME)
-        val options = Options.builder()
-            .setNumThreads(2)
-            .build()
-        interpreter = InterpreterApi.create(modelBuffer, options)
+        val options = Interpreter.Options().setNumThreads(2)
+        interpreter = Interpreter(modelBuffer, options)
 
         labels = context.assets.open(LABELS_FILENAME).bufferedReader().readLines()
             .filter { it.isNotBlank() }
