@@ -26,7 +26,11 @@ object Preprocessing {
         val rotationDegrees = imageProxy.imageInfo.rotationDegrees
         return if (rotationDegrees != 0) {
             val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
-            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            if (rotated != bitmap) {
+                bitmap.recycle()
+            }
+            rotated
         } else {
             bitmap
         }
@@ -61,6 +65,10 @@ object Preprocessing {
 
         val pixels = IntArray(MODEL_INPUT_SIZE * MODEL_INPUT_SIZE)
         resized.getPixels(pixels, 0, MODEL_INPUT_SIZE, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE)
+
+        if (resized != faceBitmap) {
+            resized.recycle()
+        }
 
         for (pixel in pixels) {
             // Convert to grayscale using luminance formula
