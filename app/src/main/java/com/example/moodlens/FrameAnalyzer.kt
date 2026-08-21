@@ -41,6 +41,9 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
     private val _emotionResult = MutableStateFlow<EmotionResult?>(null)
     val emotionResult: StateFlow<EmotionResult?> = _emotionResult.asStateFlow()
 
+    private val _latestCroppedFace = MutableStateFlow<Bitmap?>(null)
+    val latestCroppedFace: StateFlow<Bitmap?> = _latestCroppedFace.asStateFlow()
+
     private val _latencyMs = MutableStateFlow(0L)
     val latencyMs: StateFlow<Long> = _latencyMs.asStateFlow()
 
@@ -114,6 +117,7 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                         val inputBuffer = Preprocessing.preprocessToByteBuffer(croppedFace)
                         val result = emotionClassifier.classify(inputBuffer)
                         _emotionResult.value = result
+                        _latestCroppedFace.value = croppedFace
 
                         val classifyEndMs = System.currentTimeMillis()
                         val classifyMs = classifyEndMs - classifyStartMs
@@ -135,9 +139,11 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                             e
                         )
                         _emotionResult.value = null
+                        _latestCroppedFace.value = null
                     }
                 } else {
                     _emotionResult.value = null
+                    _latestCroppedFace.value = null
                     val totalMs = System.currentTimeMillis() - frameStartMs
                     _latencyMs.value = totalMs
                     if (faces.isEmpty()) {
@@ -164,6 +170,7 @@ class FrameAnalyzer(context: Context) : ImageAnalysis.Analyzer {
                 Log.e(TAG, "Face detection failed: total=${totalMs}ms", e)
                 _detectedFaces.value = emptyList()
                 _emotionResult.value = null
+                _latestCroppedFace.value = null
             }
             .addOnCompleteListener {
                 imageProxy.close()
